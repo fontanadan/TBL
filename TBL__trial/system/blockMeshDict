@@ -1,0 +1,111 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   0.01;
+
+vertices
+(
+
+// pre-bump
+    (-200      7.618839437   -0.132987337 )  //0 
+    (  0       7.618839437   -0.132987337 )  //1
+    (  0      81.267620662   -1.418531595 )  //2
+    (-200     81.267620662   -1.418531595 )  //3
+    (-200      7.618839437    0.132987337 )  //4
+    (  0       7.618839437    0.132987337 )  //5
+    (  0      81.267620662    1.418531595 )  //6
+    (-200     81.267620662    1.418531595 )  //7
+
+);
+
+blocks
+(
+    hex ( 0 1 2 3 4 5 6 7) ( 600 128  1) simpleGrading ( 1 7500 1)
+);
+
+boundary
+(
+    my-velocity-inlet
+    {
+        type patch;
+        faces
+        (
+	   (0 4 7 3)
+        );
+    }
+
+    my-pressure-outlet
+    {
+        type patch;
+        faces
+        (
+           (2 6 5 1)
+        );
+    }
+
+    my-wall
+    {
+        type wall;
+        faces
+        (
+           (0 1 5 4)
+         );
+    }
+
+
+    wedgeplanesBack
+    {
+        type 			wedge;
+        neighbourPatch  	wedgeplanesFront;
+        rotationAxis            (1 0 0);
+        rotationCentre          (0 0 0);
+        matchTolerance          1.0e-6;
+        faces
+        (
+           (0 3 2 1)      
+        );
+    }
+    
+    wedgeplanesFront
+    {
+        type 			wedge;
+        neighbourPatch  	wedgeplanesBack;
+        rotationAxis            (1 0 0);
+        rotationCentre          (0 0 0);
+        matchTolerance          1.0e-6;
+        faces
+        (
+           (4 5 6 7)
+        );
+    }
+
+    freeSurf
+    {
+        type 	symmetryPlane;
+        faces
+        (
+            (2 3 7 6)
+        );
+    }
+
+
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

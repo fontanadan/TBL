@@ -1,0 +1,174 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2012                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     	rhoEnergyFoam;
+
+startFrom       	latestTime;
+
+startTime       	0;
+
+stopAt          	endTime;
+
+endTime         	0.01;
+
+deltaT          	0.000000005;
+
+writeControl    	adjustableRunTime;
+
+writeInterval   	0.00001;
+
+purgeWrite      	0;
+
+writeFormat    		binary;
+
+writePrecision  	6;
+
+writeCompression 	off;
+
+timeFormat      	general;
+
+timePrecision   	6;
+
+runTimeModifiable 	true;
+
+//adjustTimeStep  	no;
+
+maxCo           	1;
+
+maxDeltaT       	1e-02;
+
+pressArtDiff            false; //activate artificial diffusion on pressure
+convArtDiff             false; //activate artificial diffusion on convective terms
+
+ducLevelPress           0.00;
+ducLevelConv            0.05;
+epsilon                 416737.; //velocity^2 / reference length
+kp                      0.25;
+ku                      0.75;
+rm                      0.875;
+minfty                  0.765;
+
+functions
+{
+        writeduc
+        {
+                type                    writeObjects;
+                libs                    ( "libutilityFunctionObjects.so" );
+                objects                 ( "ducSensor" );
+                writeControl            outputTime;
+                writeInterval           1;
+        }
+
+        pressure1
+        {
+                type                    pressure;
+                libs                    (fieldFunctionObjects);
+                writeControl            writeTime;
+                mode                    staticCoeff;
+                rho                     rhoInf;
+                rhoInf                  0.85;
+                U                       UInf;
+                UInf                    (291. 0 0);
+                pInf                    67978.;
+                patches                 (my-wall);
+        }
+
+	forceCoeffs
+        {
+                type                    forceCoeffs;
+                libs                    ( forces );
+                writeControl            writeTime;
+                rho                     rhoInf;
+                rhoInf                  0.85;
+                liftDir                 (0 1 0);
+                dragDir                 (1 0 0);
+                CofR                    (0.5 0 0);
+                pitchAxis               (0 0 1);
+                magUInf                 291.;
+                lRef                    1;
+                Aref                    5.715; // mesh span = 0.6, bump height = 9.525
+                patches                 (my-wall);
+        }
+
+        wallShearStress
+        {
+                type                    wallShearStress;
+                libs                    ( fieldFunctionObjects );
+                writeControl            writeTime;
+                patches                 (my-wall);
+        }
+
+        yPlus
+        {
+                type                    yPlus;
+                libs                    ( fieldFunctionObjects );
+                writeControl            writeTime;
+                patches                 (my-wall);
+        }
+
+	SampleU
+        {
+                type                    sets;
+                libs                    (sampling);
+                writeControl            outputTime;
+                writeInterval           1;
+                interpolationScheme     cell;
+                setFormat               raw;
+                sets
+                (
+                        x02neg
+                        {
+                                type            uniform;
+                                axis            y;
+                                start           (-0.2 0.0761884 0.0);
+                                end             (-0.2 0.812676  0.0);
+                                nPoints         400;
+                                interpolate     true;
+                        }
+                );
+                fields          (U grad(U) rho T);
+                }
+
+	Cp
+        {
+                type                    sets;
+                writeControl            writeTime;
+                interpolationScheme     cellPointFace;
+                setFormat               raw;
+
+                sets
+                (
+                        profile
+                        {
+
+                                type            uniform;
+                                axis            x;
+                                start           (-0.1  0.09523549296 0.0);
+                                end             ( 0.32 0.09523549296 0.0);
+                                nPoints         250;
+                                patches         ("my-wall");
+                                interpolate     false;
+                        }
+                );
+
+                fields          ( p );
+        }
+
+}
+
+
+// ************************************************************************* //
